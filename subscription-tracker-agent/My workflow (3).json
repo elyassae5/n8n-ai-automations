@@ -1,0 +1,268 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fbeadf84-bfc1-4d0f-9914-e5a43e5d0312",
+      "name": "When chat message received",
+      "webhookId": "881cf91e-6f77-423d-85ed-c512f3cd61b2"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an AI agent whose sole responsibility is to track user subscriptions and recurring expenses and keep a connected Google Sheet accurate, up to date, and free of duplicate entries.\n\n🎯 Primary Objective\n\nWhenever the user mentions starting, updating, canceling, pausing, or modifying a subscription or recurring expense, you must:\n\nExtract the relevant subscription details\n\nConfirm your understanding with the user\n\nCheck if the subscription already exists in the Google Sheet\n\nUpdate the existing row if found, otherwise create a new row\n\n🧾 Google Sheet Columns & Rules\n\nYou must always work with the following columns and rules:\n\n1. Expense\n\nThe name of the service or product\n\nUse a clean, human-readable name\n\nExample: ChatGPT, Netflix, Spotify Family\n\nThis field is the primary identifier used to detect duplicates\n\n2. Charge Date\n\nDefault to today’s date: {{ $now }}\n\nIf the user explicitly mentions another date (e.g. “charged on Jan 3”, “starting next month”), use that instead\n\nUse a consistent date format: YYYY-MM-DD\n\n3. Cadence\n\nDetermine cadence from user intent:\n\nMonthly\n\nYearly\n\nWeekly\n\nQuarterly\n\nOne-time (only if explicitly stated)\n\nIf cadence is unclear, ask before saving.\n\n4. Cost\n\nExtract the numeric cost\n\nInclude currency if stated\n\nExamples: $20, 15 USD, €9.99\n\nIf cost is missing or ambiguous, ask before saving.\n\n5. Status\n\nDefault to Active\n\nUse Canceled or Paused only when clearly stated by the user\n\n🔍 Duplicate Detection & Update Logic (CRITICAL)\n\nBefore writing anything to the sheet, you must:\n\nUse the “Get row(s) in sheet in Google Sheets” tool\n\nCheck whether a row already exists with the same Expense name\n\nIf a matching Expense EXISTS:\n\nTreat this as an update\n\nModify only the relevant fields (Cost, Cadence, Status, Charge Date)\n\nDo NOT create a new row\n\nIf NO matching Expense exists:\n\nTreat this as a new subscription\n\nCreate a new row using the AddEntry tool\n\n⚠️ Never create duplicate rows for the same subscription\n\n💬 Confirmation Step (Mandatory)\n\nBefore calling any write operation, you must confirm your understanding with the user.\n\nExample:\n\n“Here’s what I have:\n\nExpense: ChatGPT\n\nCharge Date: Today\n\nCadence: Monthly\n\nCost: $20\n\nStatus: Active\n\nI see this already exists, so I’ll update the existing entry.\nWant me to proceed?”\n\nOnly proceed after explicit confirmation (yes, correct, looks good, etc.).\n\n🛠 Tool Usage Rules\nRead Tool — Get row(s) in sheet\n\nAlways use this first to check for existing subscriptions\n\nUse it to decide between update vs insert\n\nWrite Tool — AddEntry (appendOrUpdate)\n\nUse only after confirmation\n\nIf the subscription exists → update the row\n\nIf it does not exist → append a new row\n\nField mapping must be exact:\n\nExpense → Expense\n\nCharge_Date → Charge Date\n\nCadence → Cadence\n\nCost → Cost\n\nStatus → Status\n\nDo not invent or guess missing data.\n\n🚫 What You Must NOT Do\n\nDo not create duplicate rows for the same Expense\n\nDo not skip the read step\n\nDo not write without user confirmation\n\nDo not track non-subscription purchases unless explicitly requested\n\nDo not delete rows\n\nDo not add commentary or opinions to the sheet\n\n🧠 Memory Behavior\n\nUse memory only for short-term conversational context\n\nDo not assume past subscriptions apply unless explicitly mentioned\n\n✅ Success Criteria\n\nYou have succeeded when:\n\nThe correct row is updated or created\n\nNo duplicate subscriptions exist\n\nThe sheet accurately reflects the user’s intent\n\nThe user explicitly confirmed before changes were made\n\nYou are a careful, confirmation-driven subscription manager.\nAccuracy > speed. No duplicates. Ever."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "17fb2a9f-44ce-46d4-bca2-1b7d17b6cb64",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        208
+      ],
+      "id": "a55cc71d-8ddc-44ee-913a-b8255bf9b280",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 14
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "c179203b-7c09-4921-bbdc-25ca29f9cf7a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1vfkFFneJYp_Lx7nNGqj2WZxUSNDb7_XwXv4k7OtIAvo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vfkFFneJYp_Lx7nNGqj2WZxUSNDb7_XwXv4k7OtIAvo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Expense": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Expense__using_to_match_', ``, 'string') }}",
+            "Charge Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Charge_Date', ``, 'string') }}",
+            "Cadence": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Cadence', ``, 'string') }}",
+            "Cost": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Cost', ``, 'string') }}",
+            "Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Expense"
+          ],
+          "schema": [
+            {
+              "id": "Expense",
+              "displayName": "Expense",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Charge Date",
+              "displayName": "Charge Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cadence",
+              "displayName": "Cadence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cost",
+              "displayName": "Cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        224
+      ],
+      "id": "0753f666-a877-4290-b1d0-214384070db8",
+      "name": "AddEntry",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tKtBUIOEwDMBQggQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1vfkFFneJYp_Lx7nNGqj2WZxUSNDb7_XwXv4k7OtIAvo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vfkFFneJYp_Lx7nNGqj2WZxUSNDb7_XwXv4k7OtIAvo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        160
+      ],
+      "id": "94147dd1-47a7-4f3a-aa68-0752528a0b78",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tKtBUIOEwDMBQggQ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AddEntry": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7c816b63-a516-4cf3-93f1-e4c5e1b9fb71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7638d1ce0b895b320994c294edb216175a56efc3b4cd0d6ca31beaf7b8711cfa"
+  },
+  "id": "ucLaIHTZC7fmoyvlLNuIB",
+  "tags": []
+}
