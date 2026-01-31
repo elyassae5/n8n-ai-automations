@@ -1,0 +1,521 @@
+{
+  "name": "AI Email Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        -288
+      ],
+      "id": "07d60771-ee6b-4ac8-ab80-5e319c948914",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86dee3e2-7c9e-49cd-a2c3-da69e985670a",
+              "name": "emailBody",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "aa6bb063-2021-4e12-9f5b-0f9ef683fe47",
+              "name": "threadID",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "86e09a24-b093-42cf-85bc-1e5eafb69b0e",
+              "name": "from",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        -304
+      ],
+      "id": "4638c2df-66ad-4225-9358-cc1316c6040c",
+      "name": "Set Content"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a classifier.\n\nYour task is to determine whether the following email is relevant to the\nSmokey Joe’s internal franchise handbook.\n\nThe handbook covers topics such as:\n- Franchise onboarding and inwerkprocessen\n- Opening a new location\n- SOPs and operational standards\n- Kitchen procedures, hygiene (HACCP), and halal compliance\n- Personnel training and management\n- SIDES POS system and IT issues\n- Suppliers and inventory (e.g. MAM)\n- Reviews, delivery performance, and ratings\n- TopRank (Thuisbezorgd)\n- Franchise fees, reporting, and internal procedures\n\nReturn TRUE only if the email is clearly about one or more of these topics.\nIf the email is general, unrelated, or unclear, return FALSE.\n\nReturn ONLY valid JSON in the following format:\n{\n  \"isFranchiseRelevant\": boolean\n}\n"
+            },
+            {
+              "content": "=Here is the incoming email:  {{ $json.emailBody }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_schema",
+              "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"isFranchiseRelevant\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\"isFranchiseRelevant\"],\n  \"additionalProperties\": false\n}\n",
+              "description": "Classifies whether an email is a customer support inquiry",
+              "strict": true
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -544,
+        -176
+      ],
+      "id": "87cd9d5b-bc85-402a-9d3a-f481ddf52d49",
+      "name": "Customer Support Eval",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output[0].content[0].text.customerSupport }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "3e1570e8-3d26-4b73-8cd6-675142cfa7b7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Customer Support"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "541a046a-3613-4e32-b52b-26769c76e95b",
+                    "leftValue": "={{ $json.output[0].content[0].text.customerSupport }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not Customer Support"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        -352
+      ],
+      "id": "c1134786-de67-40e0-92ff-fb8727f7ff54",
+      "name": "Customer Support?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Set Content').item.json.emailBody }}",
+        "options": {
+          "systemMessage": "=# System Role\nYou are a highly skilled and empathetic customer support agent specializing in drafting professional and helpful responses to incoming customer emails.\n\n# Task Specification\n1. Take an incoming customer support email.\n2. Use the **customerSupportDocs** tool to look up relevant policies or FAQs to ensure accurate and policy-compliant responses.\n3. Create a draft response using the **createDraft** tool.\n4. After drafting the email, provide a concise summary of the email content.\n\nEnsure the response:\n- Directly addresses the customer’s query.\n- Maintains a polite and professional tone.\n- Ends with the sign-off:\n  \"Kelly, Customer Support ABC Corp.\"\n\n# Specifics and Context\n- You must use the **customerSupportDocs** tool before drafting to ensure the response aligns with company policies and FAQs.\n- The **createDraft** tool must be used to finalize and prepare the draft for sending.\n- The summary should briefly explain the issue addressed and the key points or resolution provided in the response.\n\n# Examples\n\n## Example 1\n**Incoming Email:**\n\"I ordered a product a week ago, but it still hasn’t shipped. When will it arrive?\"\n\n**customerSupportDocs Search Query:**\n\"shipping timelines\"\n\n**Relevant Info Found:**\nStandard shipping takes 7–10 business days. Delays may occur during high-demand periods.\n\n**Draft Response (via createDraft):**\nDear [Customer’s Name],\n\nThank you for reaching out regarding your order. Standard shipping typically takes 7–10 business days. However, during high-demand periods, there may be slight delays.\n\nI’ve checked your order, and it’s currently being prepared for shipment. You should receive a tracking number shortly. If you have any further questions, feel free to let me know.\n\nBest regards,  \nKelly, Customer Support ABC Corp.\n\n**Summary:**\nProvided shipping timeline details, reassured the customer about order status, and informed them that a tracking number will be sent soon.\n\n---\n\n## Example 2\n**Incoming Email:**\n\"I was charged for my subscription even though I tried to cancel it. Can you explain why?\"\n\n**customerSupportDocs Search Query:**\n\"subscription cancellation policy\"\n\n**Relevant Info Found:**\nCancellations must be made 48 hours before the next billing cycle to avoid charges.\n\n**Draft Response (via createDraft):**\nDear [Customer’s Name],\n\nThank you for contacting us about your subscription charge. Our records show the cancellation was processed after the billing cycle had begun. To avoid future charges, cancellations must be made at least 48 hours prior to the next billing cycle.\n\nAs a courtesy, I’ve initiated a refund for this month’s charge. Please allow 3–5 business days for the refund to appear on your statement.\n\nIf you have any other questions, feel free to reach out.\n\nBest regards,  \nKelly, Customer Support ABC Corp.\n\n**Summary:**\nExplained the subscription cancellation policy, clarified why the charge occurred, and initiated a one-time refund as a courtesy.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        144,
+        -336
+      ],
+      "id": "ca44d92c-a0a7-47e3-9615-a82a38aebec4",
+      "name": "Customer Support Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        32
+      ],
+      "id": "2f5bdb29-d718-404c-987b-c2143660895f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Customer support documentation, policies, procedures, FAQs, and internal knowledge used to answer customer support questions accurately."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "70ad7be7-1670-4bcb-9521-8689592777bb",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        176
+      ],
+      "id": "d5876611-f524-4d01-9e19-18641b42836a",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "yamie-test",
+          "mode": "list",
+          "cachedResultName": "yamie-test"
+        },
+        "options": {
+          "pineconeNamespace": "test-data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        160
+      ],
+      "id": "1e05d6a9-ee57-4866-9d03-f646caa6e8c1",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "zwgaj6j6isaXyN21",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        336
+      ],
+      "id": "8772bcd5-4402-4e58-acea-fae01852c987",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $fromAI(\"subject\") }}",
+        "message": "={{ $fromAI(\"emailBody\") }}",
+        "options": {
+          "threadId": "={{ $('Set Content').item.json.threadID }}",
+          "sendTo": "={{ $('Set Content').item.json.from }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -48
+      ],
+      "id": "4ff1966c-230c-4263-ab5d-bd34f5c53c1f",
+      "name": "createDraft",
+      "webhookId": "b46a5bfc-9ec1-4972-a56d-a1cc9e52f907",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5248382939",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        -208
+      ],
+      "id": "f7e7b1f2-78e9-4e27-a88e-ad4efada50ad",
+      "name": "Response",
+      "webhookId": "efece287-ae60-4239-94d3-fda5a5f3f303",
+      "credentials": {
+        "telegramApi": {
+          "id": "Q2cMv6xkblHlquUR",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5248382939",
+        "text": "=  You received an email at {{ $now.format('hh:mm') }} saying {{ $('Set Content').item.json.emailBody }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -48,
+        -96
+      ],
+      "id": "f42ef36a-cc72-4aa7-891c-c03fd1f9feb2",
+      "name": "Response1",
+      "webhookId": "efece287-ae60-4239-94d3-fda5a5f3f303",
+      "credentials": {
+        "telegramApi": {
+          "id": "Q2cMv6xkblHlquUR",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Content": {
+      "main": [
+        [
+          {
+            "node": "Customer Support Eval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support Eval": {
+      "main": [
+        [
+          {
+            "node": "Customer Support?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support?": {
+      "main": [
+        [
+          {
+            "node": "Customer Support Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Support Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "createDraft": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "9789110a-cf71-4b79-a342-ad2b4931f1fe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7638d1ce0b895b320994c294edb216175a56efc3b4cd0d6ca31beaf7b8711cfa"
+  },
+  "id": "neZCKLvCUoZu09xMmrf4v",
+  "tags": []
+}
