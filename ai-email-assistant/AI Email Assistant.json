@@ -1,0 +1,476 @@
+{
+  "name": "AI Email Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1008,
+        -176
+      ],
+      "id": "d58d7292-c09d-4052-9a89-f22c07dbbbf3",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "=Subject: {{ $json.Subject }}\nBody: {{ $json.snippet }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Jobs",
+              "description": "Emails related to job opportunities, job applications, internships, graduate programs, or automated job alerts from platforms like LinkedIn, Jobster, or recruitment websites."
+            },
+            {
+              "category": "Professional or Social Notifications",
+              "description": "Notifications from professional or social platforms such as LinkedIn or Instagram, including connection requests, post updates, and activity summaries."
+            },
+            {
+              "category": "Newsletters or Tech Updates",
+              "description": "Informational newsletters, tech news, security updates, and industry-related content I subscribe to."
+            },
+            {
+              "category": "Promotions and Marketing",
+              "description": "Promotional emails, discounts, ads, or offers trying to sell a product or service."
+            },
+            {
+              "category": "Receipts and Account Updates",
+              "description": "Emails containing receipts, invoices, billing confirmations, subscription updates, or account-related information."
+            },
+            {
+              "category": "Security or Trust Notifications",
+              "description": "Emails related to account security, reports, warnings, or trust and safety updates from platforms or services."
+            },
+            {
+              "category": "Personal or Direct Messages",
+              "description": "Direct, non-automated emails from real people that may require a personal response."
+            },
+            {
+              "category": "misc",
+              "description": "Anything that does not clearly fit into the other categories and may require manual review."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -832,
+        -240
+      ],
+      "id": "20618a0d-3761-4e80-bbcf-f16a613690ac",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        160
+      ],
+      "id": "0d632f4a-2685-4de3-a1e4-c2707d0680a5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_3542403548032068890"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        -768
+      ],
+      "id": "c41a18ba-9e67-49b7-9ccc-90b80c31ac64",
+      "name": "Add Label Jobs",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_6298626771007195181"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        192
+      ],
+      "id": "273ce639-3f83-41c1-aa5e-12f8c1cd90f2",
+      "name": "Add Label Personal",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_8507245372003844071"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -608
+      ],
+      "id": "d3a604bb-fb92-448a-a728-b74dd0ea04da",
+      "name": "Add Label Social Notifs",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_6913379189416417161"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        -464
+      ],
+      "id": "974c5667-c958-4cd7-9198-631083c2e368",
+      "name": "Add Label NewsLetters",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_5707650199844870344"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        352
+      ],
+      "id": "725de974-f87b-4ae0-9f98-73cd4d85a97a",
+      "name": "Add Label Misc",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_456261202608256265"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        -288
+      ],
+      "id": "cd09ddf9-8db3-4eb0-9a26-86d3e67d9384",
+      "name": "Add Label Promotions",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_8553517978337798942"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -128
+      ],
+      "id": "ff01383f-8bb1-450a-b02c-068ee3df544c",
+      "name": "Add Label SubUpdate",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_7601579680809433071"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        32
+      ],
+      "id": "a317a8f3-9f63-45d4-ae17-4aa819233976",
+      "name": "Add Label Security",
+      "webhookId": "fdf9a4f2-b8b0-4d4e-a70c-9449a3e46946",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5248382939",
+        "text": "={{ $json.output[0].content[0].text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        -768
+      ],
+      "id": "4964ce98-f88f-4da1-8fd3-c3b62fc6493b",
+      "name": "Send a text message",
+      "webhookId": "9e9e5954-0f32-452c-a4df-544e1c889b3e",
+      "credentials": {
+        "telegramApi": {
+          "id": "rUrWNolgz926egYj",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Summarize this job-related email using this format:\n\nCompany:\nRole:\nLocation:\nEmployment type:\nUrgency or deadline:\nFurther Description:\nSource:\n\nEmail subject:\n{{ $('Gmail Trigger').item.json.Subject }}\n\nEmail snippet:\n{{ $('Gmail Trigger').item.json.snippet }}\n\nFrom:\n{{ $('Gmail Trigger').item.json.From }}"
+            },
+            {
+              "role": "system",
+              "content": "=You summarize job-related emails.\n\nExtract only factual information.\nBe concise.\nIf information is missing, say \"Not specified\".\nDo not invent details.\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -752
+      ],
+      "id": "e7aeb6e2-b323-43ef-ac5f-a4c90c031561",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Add Label Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label Social Notifs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label NewsLetters",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label Promotions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label SubUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label Security",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label Personal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label Misc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Label Jobs": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6b2818ce-600c-47bc-ab90-de66ad1904c2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7638d1ce0b895b320994c294edb216175a56efc3b4cd0d6ca31beaf7b8711cfa"
+  },
+  "id": "e5TJ6k0Lnb-W5_ACE5Arp",
+  "tags": []
+}
