@@ -1,0 +1,509 @@
+{
+  "name": "Daily AI Briefing",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a tech research assistant that creates a short, high-quality daily AI briefing.\n\nYour main goal is to find and summarize the 3 most interesting, impactful, or surprising pieces of recent news related to Artificial Intelligence. Focus on:\n- Major model releases or breakthroughs\n- Important research papers or discoveries\n- Notable product launches, updates, or industry shifts\n- Real-world applications of AI that feel new or unexpected\n\nAvoid clickbait, hype-only news, or repetitive topics. Prioritize clarity, novelty, and real significance.\n\nAdditionally, find ONE fun, fascinating, or little-known fact or short story from Wikipedia related to science, technology, computing, space, mathematics, religion, psychology, philosophy, biology, Islamic History, Islam, or physics. It should be genuinely interesting, not trivial.\n\nDo NOT repeat facts or stories from previous runs.\n\nWrite everything in a friendly but intelligent tone, as if for a curious tech-savvy reader, and not in a highly sophisticated and academic language.\n\nFormat the output as a mini email-style newsletter in Markdown with:\n- A clear title\n- A section for the 3 AI news items (each with a short headline + the summary)\n- A separate “Fun Science Fact” section\n\nKeep it concise, insightful, and enjoyable to read.\nAvoid the following topics: \n{{ $json.output[0].content[0].text }}\n\nToday's date{{ $json.timestamp }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        64,
+        -112
+      ],
+      "id": "ed9066e7-e481-45fc-adcd-0135f0ae8130",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        208
+      ],
+      "id": "9d4145a6-97d1-4a15-be7f-e525837bfa3c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "my_test_ID"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        208
+      ],
+      "id": "5f90b680-8e61-44d4-a3d0-b44cdd3d26dd",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        448,
+        208
+      ],
+      "id": "9d4c97ef-b656-4e49-ad7b-32933d0f6cb7",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        320,
+        224
+      ],
+      "id": "72666c44-b7ba-4015-b954-dd814eb5a50b",
+      "name": "SerpAPI",
+      "notesInFlow": false,
+      "credentials": {
+        "serpApi": {
+          "id": "qBBRxK9bvFkfZv0E",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        -80
+      ],
+      "id": "99d59850-0314-430b-9c00-8b57304c230a",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "abayodbozo@gmail.com",
+        "subject": "=Daily Briefing N8N:  {{ $('Schedule Trigger').item.json['Readable date'] }}",
+        "message": "={{ $json.output[0].content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        -128
+      ],
+      "id": "c0669d5f-3d10-41b1-8a6c-7d7a3771f4dd",
+      "name": "Send a message",
+      "webhookId": "10d610a1-9ff6-49cf-84e2-7b01b6a2618b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v0q9AWWfKgB3aXX2",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -128
+      ],
+      "id": "840e0ebf-d325-40ae-a9e3-bee184eeacbc",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Beautify the HTML below using inline CSS styling for an email. Format it like a modern newsletter. Output only the results without any header elements.\n"
+            },
+            {
+              "content": "={{ $json.data }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        -128
+      ],
+      "id": "f454ddb4-69ed-4858-ab08-705362a3fa11",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Your job is to log the news and the fun fact from the daily briefing in the relevant columns within the Google Sheets document you have access to. An AI will be reading the results of your work, so be sure to format it in a concise, detailed manner that will be easy to parse and summarize with a small number of tokens.\n"
+            },
+            {
+              "content": "=Daily Briefing:  {{ $('Markdown').item.json.data }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        -128
+      ],
+      "id": "85ddef76-04cc-4929-ba49-a4a0c3d55126",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k",
+          "mode": "list",
+          "cachedResultName": "Daily Briefing Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $('Schedule Trigger').item.json.timestamp }}",
+            "News": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('News', ``, 'string') }}",
+            "Fun Fact": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Fun_Fact', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "News",
+              "displayName": "News",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fun Fact",
+              "displayName": "Fun Fact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1312,
+        80
+      ],
+      "id": "976a272d-ceec-45c9-b616-25b601bd0b63",
+      "name": "Append row in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tKtBUIOEwDMBQggQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Your job is to review the linked Google Sheet to see what the previous daily briefs contained. The goal is not to repeat any fun facts or news stories. Generate a description for the next AI in the chain to understand which topics to avoid with the briefing.\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        -96
+      ],
+      "id": "8a9f1cb6-7395-429d-aff8-5a429f2e1852",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "nM85DfLbZFzwGEcr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k",
+          "mode": "list",
+          "cachedResultName": "Daily Briefing Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KoxVy4Gc0AvNb1SgU3rwiZtl1tJVkfHd1eS0ZaMva9k/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        112
+      ],
+      "id": "580fea81-dfa9-45bb-8194-7b8b74c0d67a",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tKtBUIOEwDMBQggQ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "1b46ff74-66f2-4395-8e2f-013a6168daf7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7638d1ce0b895b320994c294edb216175a56efc3b4cd0d6ca31beaf7b8711cfa"
+  },
+  "id": "snegMXMhXMx8rQNMwMdeF",
+  "tags": []
+}
